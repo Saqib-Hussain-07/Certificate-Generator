@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Certificate Generated{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        {% if success %}
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i>Certificate Generated Successfully!
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <h5><i class="fas fa-certificate me-2"></i>Certificate Details</h5>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <p><strong>Certificate ID:</strong> {{ certificate.certificate_id }}</p>
+                            <p><strong>Recipient:</strong> {{ certificate.recipient_name }}</p>
+                            <p><strong>Course:</strong> {{ certificate.course_name }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Completion Date:</strong> {{ certificate.completion_date }}</p>
+                            <p><strong>Issue Date:</strong> {{ certificate.issue_date }}</p>
+                            <p><strong>Organization:</strong> {{ certificate.organization }}</p>
+                        </div>
+                    </div>
+                    {% if certificate.grade %}
+                    <p><strong>Grade:</strong> {{ certificate.grade }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6>Certificate Features:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Professional PDF format</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Unique QR code for verification</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Cryptographic hash protection</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Stored in secure database</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="border p-3 rounded">
+                            <i class="fas fa-qrcode" style="font-size: 4rem; color: #333;"></i>
+                            <p class="small mt-2 text-muted">QR Code included in PDF</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3">
+                    <h6><i class="fas fa-info-circle me-2"></i>Verification Instructions</h6>
+                    <p class="mb-1">To verify this certificate:</p>
+                    <ol class="mb-0">
+                        <li>Use the Certificate ID: <code>{{ certificate.certificate_id }}</code></li>
+                        <li>Scan the QR code on the PDF certificate</li>
+                        <li>Visit the verification page: <a href="/verify/{{ certificate.certificate_id }}" target="_blank">Verify Now</a></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Certificate Generation Failed
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h5>Error Details</h5>
+                    <p>{{ error }}</p>
+                </div>
+                <p>Please check the following:</p>
+                <ul>
+                    <li>All required fields were filled correctly</li>
+                    <li>Date format is valid</li>
+                    <li>No special characters in names</li>
+                    <li>System has write permissions</li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="text-center mt-4">
+            <a href="/generate" class="btn btn-primary me-2">
+                <i class="fas fa-plus me-2"></i>Generate Another
+            </a>
+            <a href="/certificates" class="btn btn-outline-primary me-2">
+                <i class="fas fa-list me-2"></i>View All Certificates
+            </a>
+            <a href="/" class="btn btn-secondary">
+                <i class="fas fa-home me-2"></i>Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

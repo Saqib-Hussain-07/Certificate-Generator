@@ -1,0 +1,857 @@
+{% extends "base.html" %}
+
+{% block title %}All Certificates{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0" style="font-family: 'Poppins', sans-serif; font-weight: 600;">
+                    <i class="fas fa-certificate me-2" style="color: #667eea;"></i>Certificate Management
+                </h4>
+                <span class="badge fs-6 px-3 py-2" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white !important; border-radius: 12px;">
+                    <i class="fas fa-list me-1"></i>{{ certificates|length }} Certificates
+                </span>
+            </div>
+            <div class="card-body">
+                {% if certificates %}
+                <!-- Search and Filter Section -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search" style="color: #667eea;"></i>
+                            </span>
+                            <input type="text" class="form-control" id="searchInput" 
+                                   placeholder="Search by recipient, course, or certificate ID...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterSelect">
+                            <option value="">🔍 All Certificates</option>
+                            <option value="recent">📅 Recent (Last 30 days)</option>
+                            <option value="grade-a">🌟 Grade A+/A (90%+)</option>
+                            <option value="grade-b">⭐ Grade B+/B (80-89%)</option>
+                            <!-- Organization options will be added dynamically -->
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="sortSelect">
+                            <option value="date-desc">📅 Newest First</option>
+                            <option value="date-asc">📅 Oldest First</option>
+                            <option value="name-asc">👤 Name A-Z</option>
+                            <option value="name-desc">👤 Name Z-A</option>
+                            <option value="course-asc">📚 Course A-Z</option>
+                            <option value="course-desc">📚 Course Z-A</option>
+                            <option value="org-asc">🏢 Organization A-Z</option>
+                            <option value="org-desc">🏢 Organization Z-A</option>
+                            <option value="grade-desc">🌟 Highest Grade</option>
+                            <option value="grade-asc">⭐ Lowest Grade</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>
+                                    <input type="checkbox" id="selectAllCerts" class="form-check-input" title="Select/Deselect All">
+                                </th>
+                                <th style="cursor: pointer;" onclick="quickSort('name')" title="Click to sort by Recipient">
+                                    Recipient <i class="fas fa-sort text-muted"></i>
+                                </th>
+                                <th>Certificate ID</th>
+                                <th style="cursor: pointer;" onclick="quickSort('course')" title="Click to sort by Course">
+                                    Course <i class="fas fa-sort text-muted"></i>
+                                </th>
+                                <th>Completion Date</th>
+                                <th style="cursor: pointer;" onclick="quickSort('grade')" title="Click to sort by Grade">
+                                    Grade <i class="fas fa-sort text-muted"></i>
+                                </th>
+                                <th style="cursor: pointer;" onclick="quickSort('org')" title="Click to sort by Organization">
+                                    Organization <i class="fas fa-sort text-muted"></i>
+                                </th>
+                                <th style="cursor: pointer;" onclick="quickSort('date')" title="Click to sort by Issue Date">
+                                    Issue Date <i class="fas fa-sort text-muted"></i>
+                                </th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cert in certificates %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="form-check-input cert-checkbox" 
+                                           value="{{ cert.certificate_id }}" 
+                                           data-email="{{ cert.email or '' }}" 
+                                           data-phone="{{ cert.phone or '' }}" 
+                                           data-recipient="{{ cert.recipient_name }}"
+                                           data-file="/download/{{ cert.certificate_id }}">
+                                </td>
+                                <td>
+                                    <strong>{{ cert.recipient_name }}</strong>
+                                </td>
+                                <td>
+                                    <code style="padding: 4px 8px; border-radius: 6px; font-size: 0.85rem;">{{ cert.certificate_id }}</code>
+                                </td>
+                                <td>{{ cert.course_name }}</td>
+                                <td>
+                                    <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; color: white !important;">{{ cert.completion_date }}</span>
+                                </td>
+                                <td>
+                                    {% if cert.grade %}
+                                        <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #38a169, #48bb78); border-radius: 12px; color: white !important;">{{ cert.grade }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ cert.organization }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ cert.issue_date }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="/verify/{{ cert.certificate_id }}" 
+                                           class="btn btn-outline-primary btn-sm" 
+                                           title="Verify Certificate">
+                                            <i class="fas fa-check-circle"></i>
+                                        </a>
+                                        <button class="btn btn-outline-info btn-sm" 
+                                                onclick="showDetails('{{ cert.certificate_id }}')"
+                                                title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <a href="/download/{{ cert.certificate_id }}" 
+                                           class="btn btn-outline-success btn-sm" 
+                                           title="Download Certificate">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        {% if full_features %}
+                                        <a href="/qr/{{ cert.certificate_id }}" 
+                                           class="btn btn-outline-warning btn-sm" 
+                                           title="Download QR Code">
+                                            <i class="fas fa-qrcode"></i>
+                                        </a>
+                                        {% endif %}
+                                        <button class="btn btn-outline-secondary btn-sm" 
+                                                onclick="copyId('{{ cert.certificate_id }}')"
+                                                title="Copy ID">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger btn-sm" 
+                                                onclick="deleteCertificate('{{ cert.certificate_id }}')"
+                                                title="Delete Certificate">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Statistics -->
+                <div class="row mt-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white text-center">
+                            <div class="card-body">
+                                <h5>{{ certificates|length }}</h5>
+                                <small>Total Certificates</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white text-center">
+                            <div class="card-body">
+                                <h5>{{ certificates|selectattr('grade')|list|length }}</h5>
+                                <small>With Grades</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white text-center">
+                            <div class="card-body">
+                                <h5>{{ certificates|map(attribute='organization')|unique|list|length }}</h5>
+                                <small>Organizations</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white text-center">
+                            <div class="card-body">
+                                <h5>{{ certificates|map(attribute='course_name')|unique|list|length }}</h5>
+                                <small>Unique Courses</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Bulk Send Panel -->
+                <div class="card mt-4" id="bulkSendPanel" style="display: none;">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-paper-plane me-2" style="color: #667eea;"></i>
+                            Send Selected Certificates
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Delivery Method</label>
+                                <select id="sendMethod" class="form-select">
+                                    <option value="email">📧 Email</option>
+                                    <option value="whatsapp">📱 WhatsApp (via Twilio)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Selected Count</label>
+                                <input type="text" id="selectedCount" class="form-control" readonly value="0 selected">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Message</label>
+                            <textarea id="sendMessage" class="form-control" rows="3" 
+                                      placeholder="Enter your message here...">Congratulations! Please find your certificate attached.</textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button id="selectAllBtn" class="btn btn-outline-secondary btn-sm me-2">Select All</button>
+                                <button id="deselectAllBtn" class="btn btn-outline-secondary btn-sm me-2">Deselect All</button>
+                                <button id="hideSendPanel" class="btn btn-outline-secondary btn-sm">Hide Panel</button>
+                            </div>
+                            <button id="sendSelectedBtn" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i>Send Selected
+                            </button>
+                        </div>
+                        
+                        <div id="sendResults" class="mt-3" style="display: none;"></div>
+                    </div>
+                </div>
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-certificate text-muted" style="font-size: 4rem;"></i>
+                    <h5 class="mt-3 text-muted">No Certificates Found</h5>
+                    <p class="text-muted">Start by generating your first certificate!</p>
+                    <a href="/generate" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Generate Certificate
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if certificates %}
+        <div class="text-center mt-4">
+            <button id="showBulkSend" class="btn btn-success me-2">
+                <i class="fas fa-paper-plane me-2"></i>Bulk Send Certificates
+            </button>
+            <a href="/generate" class="btn btn-primary me-2">
+                <i class="fas fa-plus me-2"></i>Generate New
+            </a>
+            <a href="/bulk_generate" class="btn btn-outline-primary me-2">
+                <i class="fas fa-layer-group me-2"></i>Bulk Generate
+            </a>
+            <a href="/" class="btn btn-secondary">
+                <i class="fas fa-home me-2"></i>Home
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Certificate Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Certificate Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="certificateDetails">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Certificate data for JavaScript
+{% if certificates %}
+const certificatesData = {{ certificates|tojson|safe }};
+{% else %}
+const certificatesData = [];
+{% endif %}
+
+// Show certificate details
+function showDetails(certificateId) {
+    if (!certificatesData || certificatesData.length === 0) {
+        alert('No certificate data available');
+        return;
+    }
+    
+    const cert = certificatesData.find(c => c.certificate_id === certificateId);
+    
+    if (cert) {
+        const detailsHtml = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>Certificate Information</h6>
+                    <table class="table table-sm">
+                        <tr><td><strong>ID:</strong></td><td><code>${cert.certificate_id}</code></td></tr>
+                        <tr><td><strong>Recipient:</strong></td><td>${cert.recipient_name}</td></tr>
+                        <tr><td><strong>Course:</strong></td><td>${cert.course_name}</td></tr>
+                        <tr><td><strong>Completion Date:</strong></td><td>${cert.completion_date}</td></tr>
+                        <tr><td><strong>Issue Date:</strong></td><td>${cert.issue_date}</td></tr>
+                        <tr><td><strong>Organization:</strong></td><td>${cert.organization}</td></tr>
+                        ${cert.grade ? `<tr><td><strong>Grade:</strong></td><td><span class="badge bg-success">${cert.grade}</span></td></tr>` : ''}
+                        ${cert.instructor_name ? `<tr><td><strong>Instructor:</strong></td><td>${cert.instructor_name}</td></tr>` : ''}
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6>Verification</h6>
+                    <p><strong>Verification URL:</strong></p>
+                    <input type="text" class="form-control form-control-sm mb-2" 
+                           value="${window.location.origin}/verify/${cert.certificate_id}" readonly>
+                    <button class="btn btn-sm btn-outline-primary" 
+                            onclick="window.open('/verify/${cert.certificate_id}', '_blank')">
+                        <i class="fas fa-external-link-alt me-1"></i>Open Verification Page
+                    </button>
+                    
+                    <div class="mt-3">
+                        <h6>Security</h6>
+                        <p><small class="text-muted">Certificate Hash:</small></p>
+                        <code class="small">${cert.certificate_hash}</code>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('certificateDetails').innerHTML = detailsHtml;
+        new bootstrap.Modal(document.getElementById('detailsModal')).show();
+    }
+}
+
+// Copy certificate ID to clipboard
+function copyId(certificateId) {
+    navigator.clipboard.writeText(certificateId).then(function() {
+        // Show success message
+        const toast = document.createElement('div');
+        toast.className = 'toast position-fixed top-0 end-0 m-3';
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="toast-header">
+                <i class="fas fa-copy text-success me-2"></i>
+                <strong class="me-auto">Copied!</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                Certificate ID copied to clipboard
+            </div>
+        `;
+        document.body.appendChild(toast);
+        
+        const bootstrapToast = new bootstrap.Toast(toast);
+        bootstrapToast.show();
+        
+        // Remove toast after it's hidden
+        toast.addEventListener('hidden.bs.toast', function() {
+            toast.remove();
+        });
+    }).catch(function(err) {
+        alert('Failed to copy: ' + certificateId);
+    });
+}
+
+// Delete certificate function
+function deleteCertificate(certificateId) {
+    if (!confirm('Are you sure you want to delete this certificate? This action can be undone.')) {
+        return;
+    }
+
+    fetch('/api/delete_certificate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            certificate_id: certificateId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Show success toast
+            const toast = document.createElement('div');
+            toast.className = 'toast position-fixed top-0 end-0 m-3';
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="toast-header">
+                    <i class="fas fa-trash text-success me-2"></i>
+                    <strong class="me-auto">Deleted!</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">
+                    Certificate deleted successfully
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            const bootstrapToast = new bootstrap.Toast(toast);
+            bootstrapToast.show();
+            
+            // Remove toast after it's hidden
+            toast.addEventListener('hidden.bs.toast', function() {
+                toast.remove();
+            });
+            
+            // Reload the page after a short delay
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            alert('Error: ' + (data.error || 'Failed to delete certificate'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to delete certificate');
+    });
+}
+
+// Search and filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we have certificate data
+    if (!certificatesData || certificatesData.length === 0) {
+        return; // No certificates to search
+    }
+    
+    // Add organization options to the existing filter dropdown
+    const filterSelect = document.getElementById('filterSelect');
+    if (filterSelect) {
+        // Get unique organizations
+        const organizations = [...new Set(certificatesData.map(cert => cert.organization))];
+        
+        // Add separator and organization options
+        if (organizations.length > 0) {
+            const separator = document.createElement('option');
+            separator.disabled = true;
+            separator.textContent = '──── Organizations ────';
+            filterSelect.appendChild(separator);
+            
+            organizations.forEach(org => {
+                const option = document.createElement('option');
+                option.value = `org-${org}`;
+                option.textContent = `🏢 ${org}`;
+                filterSelect.appendChild(option);
+            });
+        }
+        
+        // Add event listeners
+        document.getElementById('searchInput').addEventListener('input', applyFiltersAndSort);
+        filterSelect.addEventListener('change', applyFiltersAndSort);
+        
+        const sortSelect = document.getElementById('sortSelect');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', applyFiltersAndSort);
+        }
+    }
+});
+
+function applyFiltersAndSort() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const filterValue = document.getElementById('filterSelect').value;
+    const sortValue = document.getElementById('sortSelect').value;
+    const tbody = document.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // First, apply filters
+    const filteredRows = rows.filter(row => {
+        const text = row.textContent.toLowerCase();
+        const matchesSearch = text.includes(searchTerm);
+        let matchesFilter = true;
+        
+        if (filterValue) {
+            if (filterValue === 'recent') {
+                // Filter for certificates issued in last 30 days
+                const issueDateCell = row.cells[7]; // Issue Date column (updated index)
+                if (issueDateCell) {
+                    const dateText = issueDateCell.textContent.trim();
+                    const issueDate = new Date(dateText);
+                    const thirtyDaysAgo = new Date();
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    matchesFilter = !isNaN(issueDate.getTime()) && issueDate >= thirtyDaysAgo;
+                }
+            } else if (filterValue === 'grade-a') {
+                // Filter for Grade A+/A and high percentage grades (90%+)
+                const gradeCell = row.cells[5]; // Grade column (updated index)
+                if (gradeCell) {
+                    const gradeText = gradeCell.textContent.trim().toUpperCase();
+                    if (gradeText === 'A+' || gradeText === 'A' || gradeText === 'A-') {
+                        matchesFilter = true;
+                    } else if (gradeText.includes('%')) {
+                        const percentage = parseInt(gradeText.replace('%', ''));
+                        matchesFilter = percentage >= 90;
+                    } else {
+                        matchesFilter = false;
+                    }
+                } else {
+                    matchesFilter = false;
+                }
+            } else if (filterValue === 'grade-b') {
+                // Filter for Grade B+/B and medium percentage grades (80-89%)
+                const gradeCell = row.cells[5]; // Grade column (updated index)
+                if (gradeCell) {
+                    const gradeText = gradeCell.textContent.trim().toUpperCase();
+                    if (gradeText === 'B+' || gradeText === 'B' || gradeText === 'B-') {
+                        matchesFilter = true;
+                    } else if (gradeText.includes('%')) {
+                        const percentage = parseInt(gradeText.replace('%', ''));
+                        matchesFilter = percentage >= 80 && percentage < 90;
+                    } else {
+                        matchesFilter = false;
+                    }
+                } else {
+                    matchesFilter = false;
+                }
+            } else if (filterValue.startsWith('org-')) {
+                // Filter by organization
+                const orgName = filterValue.substring(4);
+                const orgCell = row.cells[6]; // Organization column (updated index)
+                if (orgCell) {
+                    matchesFilter = orgCell.textContent.trim() === orgName;
+                }
+            }
+        }
+        
+        return matchesSearch && matchesFilter;
+    });
+    
+    // Sort the filtered rows
+    filteredRows.sort((a, b) => {
+        let comparison = 0;
+        
+        switch (sortValue) {
+            case 'date-desc':
+                const dateA = new Date(a.cells[7].textContent.trim());
+                const dateB = new Date(b.cells[7].textContent.trim());
+                comparison = dateB.getTime() - dateA.getTime();
+                break;
+            case 'date-asc':
+                const dateA2 = new Date(a.cells[7].textContent.trim());
+                const dateB2 = new Date(b.cells[7].textContent.trim());
+                comparison = dateA2.getTime() - dateB2.getTime();
+                break;
+            case 'name-asc':
+                comparison = a.cells[1].textContent.trim().localeCompare(b.cells[1].textContent.trim());
+                break;
+            case 'name-desc':
+                comparison = b.cells[1].textContent.trim().localeCompare(a.cells[1].textContent.trim());
+                break;
+            case 'course-asc':
+                comparison = a.cells[3].textContent.trim().localeCompare(b.cells[3].textContent.trim());
+                break;
+            case 'course-desc':
+                comparison = b.cells[3].textContent.trim().localeCompare(a.cells[3].textContent.trim());
+                break;
+            case 'org-asc':
+                comparison = a.cells[6].textContent.trim().localeCompare(b.cells[6].textContent.trim());
+                break;
+            case 'org-desc':
+                comparison = b.cells[6].textContent.trim().localeCompare(a.cells[6].textContent.trim());
+                break;
+            case 'grade-desc':
+                comparison = compareGrades(b.cells[5].textContent.trim(), a.cells[5].textContent.trim());
+                break;
+            case 'grade-asc':
+                comparison = compareGrades(a.cells[5].textContent.trim(), b.cells[5].textContent.trim());
+                break;
+        }
+        
+        return comparison;
+    });
+    
+    // Hide all rows first
+    rows.forEach(row => row.style.display = 'none');
+    
+    // Clear tbody and append sorted, filtered rows
+    tbody.innerHTML = '';
+    filteredRows.forEach(row => {
+        row.style.display = '';
+        tbody.appendChild(row);
+    });
+    
+    // Add hidden rows back (for search functionality)
+    const hiddenRows = rows.filter(row => !filteredRows.includes(row));
+    hiddenRows.forEach(row => {
+        row.style.display = 'none';
+        tbody.appendChild(row);
+    });
+    
+    // Update visible count
+    const totalRows = rows.length;
+    const badge = document.querySelector('.badge');
+    if (badge && totalRows > 0) {
+        if (filteredRows.length === totalRows) {
+            badge.innerHTML = `<i class="fas fa-list me-1"></i>${totalRows} Certificates`;
+        } else {
+            badge.innerHTML = `<i class="fas fa-filter me-1"></i>${filteredRows.length} of ${totalRows} Certificates`;
+        }
+    }
+}
+
+function compareGrades(gradeA, gradeB) {
+    // Convert grades to numeric values for comparison
+    const gradeMap = {
+        'A+': 4.3, 'A': 4.0, 'A-': 3.7,
+        'B+': 3.3, 'B': 3.0, 'B-': 2.7,
+        'C+': 2.3, 'C': 2.0, 'C-': 1.7,
+        'D+': 1.3, 'D': 1.0, 'D-': 0.7,
+        'F': 0.0, 'PASS': 2.0
+    };
+    
+    let valueA = gradeMap[gradeA.toUpperCase()];
+    let valueB = gradeMap[gradeB.toUpperCase()];
+    
+    // Handle percentage grades
+    if (gradeA.includes('%')) {
+        valueA = parseInt(gradeA.replace('%', '')) / 100 * 4.3;
+    }
+    if (gradeB.includes('%')) {
+        valueB = parseInt(gradeB.replace('%', '')) / 100 * 4.3;
+    }
+    
+    // Handle missing grades
+    if (valueA === undefined) valueA = 0;
+    if (valueB === undefined) valueB = 0;
+    
+    return valueB - valueA; // Higher grades first
+}
+
+function quickSort(column) {
+    const sortSelect = document.getElementById('sortSelect');
+    const currentSort = sortSelect.value;
+    
+    // Toggle between ascending and descending for the same column
+    let newSort = '';
+    
+    switch (column) {
+        case 'name':
+            newSort = currentSort === 'name-asc' ? 'name-desc' : 'name-asc';
+            break;
+        case 'course':
+            newSort = currentSort === 'course-asc' ? 'course-desc' : 'course-asc';
+            break;
+        case 'grade':
+            newSort = currentSort === 'grade-desc' ? 'grade-asc' : 'grade-desc';
+            break;
+        case 'org':
+            newSort = currentSort === 'org-asc' ? 'org-desc' : 'org-asc';
+            break;
+        case 'date':
+            newSort = currentSort === 'date-desc' ? 'date-asc' : 'date-desc';
+            break;
+    }
+    
+    sortSelect.value = newSort;
+    applyFiltersAndSort();
+    
+    // Update header icons to show current sort
+    updateHeaderIcons(column, newSort);
+}
+
+function updateHeaderIcons(activeColumn, sortValue) {
+    // Reset all icons
+    const headers = document.querySelectorAll('th i.fas');
+    headers.forEach(icon => {
+        icon.className = 'fas fa-sort text-muted';
+    });
+    
+    // Update active column icon
+    let headerIndex = -1;
+    let isAsc = false;
+    
+    if (activeColumn === 'name') {
+        headerIndex = 1; // Updated for checkbox column
+        isAsc = sortValue.includes('asc');
+    } else if (activeColumn === 'course') {
+        headerIndex = 3; // Updated for checkbox column
+        isAsc = sortValue.includes('asc');
+    } else if (activeColumn === 'grade') {
+        headerIndex = 5; // Updated for checkbox column
+        isAsc = sortValue.includes('asc');
+    } else if (activeColumn === 'org') {
+        headerIndex = 6; // Updated for checkbox column
+        isAsc = sortValue.includes('asc');
+    } else if (activeColumn === 'date') {
+        headerIndex = 7; // Updated for checkbox column
+        isAsc = sortValue.includes('asc');
+    }
+    
+    if (headerIndex >= 0) {
+        const headerIcon = document.querySelectorAll('th')[headerIndex].querySelector('i');
+        if (headerIcon) {
+            headerIcon.className = isAsc ? 'fas fa-sort-up text-primary' : 'fas fa-sort-down text-primary';
+        }
+    }
+}
+
+// Bulk Send Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const showBulkSendBtn = document.getElementById('showBulkSend');
+    const bulkSendPanel = document.getElementById('bulkSendPanel');
+    const hideSendPanelBtn = document.getElementById('hideSendPanel');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const deselectAllBtn = document.getElementById('deselectAllBtn');
+    const sendSelectedBtn = document.getElementById('sendSelectedBtn');
+    const selectAllCerts = document.getElementById('selectAllCerts');
+    
+    // Show/Hide bulk send panel
+    if (showBulkSendBtn) {
+        showBulkSendBtn.addEventListener('click', function() {
+            bulkSendPanel.style.display = 'block';
+            showBulkSendBtn.style.display = 'none';
+        });
+    }
+    
+    if (hideSendPanelBtn) {
+        hideSendPanelBtn.addEventListener('click', function() {
+            bulkSendPanel.style.display = 'none';
+            showBulkSendBtn.style.display = 'inline-block';
+        });
+    }
+    
+    // Select/Deselect functionality
+    function getCertCheckboxes() {
+        return Array.from(document.querySelectorAll('.cert-checkbox'));
+    }
+    
+    function updateSelectedCount() {
+        const selected = getCertCheckboxes().filter(cb => cb.checked);
+        document.getElementById('selectedCount').value = `${selected.length} selected`;
+    }
+    
+    if (selectAllCerts) {
+        selectAllCerts.addEventListener('change', function() {
+            getCertCheckboxes().forEach(cb => cb.checked = this.checked);
+            updateSelectedCount();
+        });
+    }
+    
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', function() {
+            getCertCheckboxes().forEach(cb => cb.checked = true);
+            if (selectAllCerts) selectAllCerts.checked = true;
+            updateSelectedCount();
+        });
+    }
+    
+    if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', function() {
+            getCertCheckboxes().forEach(cb => cb.checked = false);
+            if (selectAllCerts) selectAllCerts.checked = false;
+            updateSelectedCount();
+        });
+    }
+    
+    // Update count when individual checkboxes change
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('cert-checkbox')) {
+            updateSelectedCount();
+            
+            // Update "select all" checkbox state
+            const checkboxes = getCertCheckboxes();
+            const checkedCount = checkboxes.filter(cb => cb.checked).length;
+            if (selectAllCerts) {
+                selectAllCerts.checked = checkedCount === checkboxes.length;
+                selectAllCerts.indeterminate = checkedCount > 0 && checkedCount < checkboxes.length;
+            }
+        }
+    });
+    
+    // Send selected certificates
+    if (sendSelectedBtn) {
+        sendSelectedBtn.addEventListener('click', async function() {
+            const selectedCheckboxes = getCertCheckboxes().filter(cb => cb.checked);
+            
+            if (selectedCheckboxes.length === 0) {
+                alert('Please select at least one certificate to send.');
+                return;
+            }
+            
+            const method = document.getElementById('sendMethod').value;
+            const message = document.getElementById('sendMessage').value;
+            
+            // Build items array from selected checkboxes
+            const items = selectedCheckboxes.map(cb => ({
+                certificate_id: cb.value,
+                recipient_name: cb.dataset.recipient,
+                email: cb.dataset.email || '',
+                phone: cb.dataset.phone || '',
+                file: cb.dataset.file
+            }));
+            
+            // Show sending state
+            sendSelectedBtn.disabled = true;
+            sendSelectedBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+            
+            try {
+                const response = await fetch('/bulk_send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        items: items,
+                        method: method,
+                        message: message
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // Show results
+                const resultsDiv = document.getElementById('sendResults');
+                resultsDiv.style.display = 'block';
+                resultsDiv.innerHTML = '';
+                
+                if (result.results) {
+                    result.results.forEach(r => {
+                        const alertClass = r.result.status === 'success' ? 'alert-success' : 'alert-danger';
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = `alert ${alertClass} alert-sm`;
+                        alertDiv.innerHTML = `
+                            <strong>${r.method.toUpperCase()}</strong> 
+                            ${r.certificate_id} → ${r.recipient}: 
+                            ${r.result.message || JSON.stringify(r.result)}
+                        `;
+                        resultsDiv.appendChild(alertDiv);
+                    });
+                }
+                
+            } catch (error) {
+                const resultsDiv = document.getElementById('sendResults');
+                resultsDiv.style.display = 'block';
+                resultsDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            } finally {
+                // Reset button state
+                sendSelectedBtn.disabled = false;
+                sendSelectedBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send Selected';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

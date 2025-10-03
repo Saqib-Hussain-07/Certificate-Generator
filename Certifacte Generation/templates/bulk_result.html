@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Generation Result{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        {% if success %}
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i>Bulk Certificate Generation Completed!
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <h5><i class="fas fa-layer-group me-2"></i>Generation Summary</h5>
+                    <p class="mb-2">Successfully generated <strong>{{ count }}</strong> certificates.</p>
+                    <p class="mb-0">All certificates have been saved with unique IDs and QR codes.</p>
+                </div>
+
+                {% if files %}
+                <div class="mt-4">
+                    <h6>Generated Certificates:</h6>
+                    <div class="list-group">
+                        {% for item in files %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="form-check">
+                                <input class="form-check-input send-checkbox" type="checkbox" value="{{ item.certificate_id }}" id="cb_{{ item.certificate_id }}">
+                                <label class="form-check-label ms-2" for="cb_{{ item.certificate_id }}">
+                                    <i class="fas fa-certificate text-primary me-2"></i>
+                                    {{ item.recipient_name }} — <code>{{ item.certificate_id }}</code>
+                                </label>
+                            </div>
+                            <div>
+                                <a href="/download/{{ item.certificate_id }}" class="btn btn-sm btn-outline-primary me-2" title="Download">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                <a href="/verify/{{ item.certificate_id }}" class="btn btn-sm btn-outline-success" title="Verify">
+                                    <i class="fas fa-check-circle"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% elif certificate_ids %}
+                <div class="mt-4">
+                    <h6>Generated Certificates:</h6>
+                    <div class="list-group">
+                        {% for cert_id in certificate_ids %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="form-check">
+                                <input class="form-check-input send-checkbox" type="checkbox" value="{{ cert_id }}" id="cb_{{ cert_id }}">
+                                <label class="form-check-label ms-2" for="cb_{{ cert_id }}">
+                                    <i class="fas fa-certificate text-primary me-2"></i>
+                                    Certificate ID: <code>{{ cert_id }}</code>
+                                </label>
+                            </div>
+                            <div>
+                                <a href="/download/{{ cert_id }}" class="btn btn-sm btn-outline-primary me-2" title="Download">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                <a href="/verify/{{ cert_id }}" class="btn btn-sm btn-outline-success" title="Verify">
+                                    <i class="fas fa-check-circle"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if files %}
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h6>Send Certificates</h6>
+                        <p class="small text-muted">Select recipients and choose a delivery method.</p>
+
+                        <div class="row mb-2">
+                            <div class="col-md-6">
+                                <select id="send_method" class="form-select">
+                                    <option value="email" selected>Email</option>
+                                    <option value="whatsapp">WhatsApp (via Twilio)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <button id="select_all" class="btn btn-sm btn-outline-secondary me-2">Select All</button>
+                                <button id="deselect_all" class="btn btn-sm btn-outline-secondary">Deselect All</button>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <textarea id="send_message" class="form-control" rows="3">Please find your certificate attached. Congratulations!</textarea>
+                        </div>
+
+                        <div class="mb-2">
+                            <button id="send_selected" class="btn btn-primary">Send Selected</button>
+                        </div>
+
+                        <div id="send_results" class="mt-3"></div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="alert alert-info mt-4">
+                    <h6><i class="fas fa-info-circle me-2"></i>Next Steps</h6>
+                    <ul class="mb-0">
+                        <li>All certificates are saved in the <code>certificates/</code> directory</li>
+                        <li>QR codes are saved in the <code>qr_codes/</code> directory</li>
+                        <li>Certificate records are stored in the database for verification</li>
+                        <li>Share the PDF files with recipients</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Bulk Generation Failed
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h5>Error Details</h5>
+                    <p>{{ error }}</p>
+                </div>
+                
+                <div class="mt-3">
+                    <h6>Common Issues and Solutions:</h6>
+                    <ul>
+                        <li><strong>Empty data:</strong> Make sure to enter CSV data in the text area</li>
+                        <li><strong>Invalid format:</strong> Check that each line has at least 3 comma-separated values</li>
+                        <li><strong>Date format:</strong> Use YYYY-MM-DD format for dates</li>
+                        <li><strong>Special characters:</strong> Avoid commas within field values</li>
+                        <li><strong>File permissions:</strong> Ensure the system can write to the certificates directory</li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-warning mt-3">
+                    <h6>Example of correct format:</h6>
+                    <code>
+                        John Doe, Python Programming, 2025-10-01, Dr. Smith, Tech Academy, A+<br>
+                        Jane Smith, Data Science, 2025-10-02, Prof. Johnson, Data Institute, B+
+                    </code>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="text-center mt-4">
+            <a href="/bulk_generate" class="btn btn-primary me-2">
+                <i class="fas fa-layer-group me-2"></i>Generate More
+            </a>
+            <a href="/certificates" class="btn btn-outline-primary me-2">
+                <i class="fas fa-list me-2"></i>View All Certificates
+            </a>
+            <a href="/" class="btn btn-secondary">
+                <i class="fas fa-home me-2"></i>Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const selectAll = document.getElementById('select_all');
+    const deselectAll = document.getElementById('deselect_all');
+    const sendBtn = document.getElementById('send_selected');
+
+    function getCheckboxes(){
+        return Array.from(document.querySelectorAll('.send-checkbox'));
+    }
+
+    selectAll?.addEventListener('click', function(e){
+        e.preventDefault();
+        getCheckboxes().forEach(cb => cb.checked = true);
+    });
+
+    deselectAll?.addEventListener('click', function(e){
+        e.preventDefault();
+        getCheckboxes().forEach(cb => cb.checked = false);
+    });
+
+    sendBtn?.addEventListener('click', async function(){
+        const method = document.getElementById('send_method').value;
+        const message = document.getElementById('send_message').value;
+
+        const selected = getCheckboxes().filter(cb => cb.checked).map(cb => cb.value);
+        if(selected.length === 0){
+            alert('Select at least one certificate to send.');
+            return;
+        }
+
+        // Safely access files data injected by Jinja
+        const filesData = window.__bulk_files__ || null;
+
+        const items = [];
+        if(filesData){
+            for(const f of filesData){
+                if(selected.includes(f.certificate_id)){
+                    items.push(f);
+                }
+            }
+        } else {
+            for(const id of selected){
+                items.push({certificate_id: id, file: `/download/${id}`, recipient_name: id, email: '', phone: ''});
+            }
+        }
+
+        const payload = { items, method, message };
+
+        const res = await fetch('/bulk_send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+
+        const resultsDiv = document.getElementById('send_results');
+        resultsDiv.innerHTML = '';
+        if(result && result.results){
+            for(const r of result.results){
+                const p = document.createElement('div');
+                p.className = 'alert alert-sm ' + (r.result.status === 'success' ? 'alert-success' : 'alert-danger');
+                p.textContent = `${r.method.toUpperCase()} ${r.certificate_id} -> ${r.recipient}: ${r.result.message || JSON.stringify(r.result)}`;
+                resultsDiv.appendChild(p);
+            }
+        }
+    });
+});
+</script>
+
+<script>
+// Inject files JSON into a global variable for safe JS access
+{% if files %}
+window.__bulk_files__ = {{ files|tojson|safe }};
+{% else %}
+window.__bulk_files__ = null;
+{% endif %}
+</script>
+{% endblock %}
