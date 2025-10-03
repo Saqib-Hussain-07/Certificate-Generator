@@ -286,19 +286,6 @@ CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:5000", "web_verification:app"]
 4. Add tests if applicable
 5. Submit a pull request
 
-## License 📄
-
-This project is open source and available under the MIT License.
-
-## Support 💬
-
-For questions, issues, or suggestions:
-- Create an issue on GitHub
-- Check the troubleshooting section
-- Review the example code
-
----
-
 ## Sending Certificates (Email / WhatsApp)
 
 You can send generated certificates in bulk from the bulk generation result page. The system supports two delivery methods:
@@ -339,5 +326,16 @@ Note: Twilio requires media (attachment) URLs to be publicly reachable. Local fi
 
 If you want help wiring an SMTP provider (Gmail/SendGrid) or uploading files to a public bucket for Twilio, tell me which provider you'd like and I can add automated helpers.
 
+## License 📄
 
+This project is open source and available under the MIT License.
+
+## Support 💬
+
+For questions, issues, or suggestions:
+- Create an issue on GitHub
+- Check the troubleshooting section
+- Review the example code
+
+---
 **Built with ❤️ using Python, Flask, ReportLab, and QRCode libraries.**
