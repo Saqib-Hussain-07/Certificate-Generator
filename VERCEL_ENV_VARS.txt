@@ -1,0 +1,13 @@
+# Copy these environment variables to your Vercel dashboard
+# Go to: Project Settings → Environment Variables
+
+SECRET_KEY=change-this-to-a-random-secret-key-in-production-12345
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-gmail-app-password
+
+# Optional: For WhatsApp integration
+# TWILIO_ACCOUNT_SID=your-twilio-account-sid
+# TWILIO_AUTH_TOKEN=your-twilio-auth-token
+# TWILIO_PHONE_NUMBER=+1234567890
